@@ -1,0 +1,7 @@
+Elabore (em codigo C/C++) uma solucao para o problema da secao critica.
+Em um sistema bancario multiplas threads podem realizar operacoes
+de debito e credito no saldo dos clientes - elabore uma solucao para a 
+manipulacao do saldo utilizando locks, implementando o protocolo de entrada
+utilizando uma instrucao atomica (destaque qual eh esta instrucao e como ela funciona)
+
+R-

@@ -1,0 +1,7 @@
+Elabore a solucao para um programa que processe uma imagem em N partes
+e depois reagrupe tais partes, atraves de algum mecanismo de sincronimo entre
+as threads. O esboco pode ser em codigo/psudo codigo ou em descricao textual, 
+porem eh importante que se deixe claro qual eh o mecanismo de sincronismo e como
+pode ser implementado sem incidir em contencao de memoria
+
+R-

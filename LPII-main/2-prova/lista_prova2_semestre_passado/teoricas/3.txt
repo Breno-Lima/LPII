@@ -1,0 +1,5 @@
+Descreva as propriedades da Safety e Liveness e porque elas
+sao importantes no ambito do desenvolvimento de programas 
+concorrentes.
+
+R-
