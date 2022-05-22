@@ -1,2 +1,0 @@
-# LPII
-Códigos LPII
