@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+
+#define QTD_THREADS 10
+
+float x = 0;
+float y = 0;
+
+int lock_x = 0;
+int lock_y = 0;
+
+void* man_par(void* p){
+    long idx = (long)p;
+   
+    if(idx%2==0){ // verifica par
+        while(1){ // while true para manter a rotação
+            while(__atomic_test_and_set(&lock_x, 1)); // Inicio da seção crítica
+                x += ((rand() % 4) + 1);
+                printf("[%ld] | par[%f]", idx, x);
+                puts("...");
+            lock_x=0; // Fim da seção crítica
+            usleep(25000); // Tempo dormindo
+
+        }
+    }
+   
+   
+}
+
+void* man_impar(void* p){
+    long idx = (long)p;
+   
+    if(idx%2!=0){ // verifica impar
+        while(1){ // while true para manter a rotação
+            while(__atomic_test_and_set(&lock_y, 1)); // Inicio da seção crítica
+                y += ((rand() % 23) + 2); //
+                printf("[%ld] | impar[%f]", idx, y);
+                puts("...");
+            lock_y=0; // Fim da seção crítica
+            usleep(30000); // Tempo dormindo
+
+        }
+    }
+   
+}
+
+int main(void){
+
+    pthread_t par[QTD_THREADS];
+    pthread_t impar[QTD_THREADS];
+   
+    long i = 0;
+   
+    printf("Inicio main\n");
+    for(i = 0; i < QTD_THREADS; i++){
+        pthread_create(&par[i], NULL, man_par, (void*)i );
+    }
+   
+    for(i = 0; i < QTD_THREADS; i++){
+        pthread_create(&impar[i], NULL, man_impar, (void*)i );
+    }
+   
+    while(1){
+        if ((x+y)>=100){
+            break;
+        }
+    }
+   
+    printf("[main] A soma de x + y = %f\n", (x+y));
+   
+    //sleep(10);
+   
+    printf("Fim main\n");
+
+   
+    return 0;
+}
