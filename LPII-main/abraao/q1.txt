@@ -10,8 +10,9 @@
 #include <arpa/inet.h>
 
 #define TAM_MSG 50
-#define QTD_CLIENTES 10
+#define QTD_CLIENTES 8
 #define ADDR_SIZE 10
+
 int client_counter = 0;
 pthread_mutex_t mutex_counter = PTHREAD_MUTEX_INITIALIZER;
 
@@ -20,7 +21,7 @@ void *handle_client(void *p)
 {   
     printf("Dentro do handleclient\n");
     int my_client_fd = (int)p;
-    char* welcome_msg =  "BEMVINDO\n";
+    char* welcome_msg =  "WELCOME\n";
     pthread_mutex_lock(&mutex_counter);
     client_counter++;
     pthread_mutex_unlock(&mutex_counter);
@@ -41,6 +42,13 @@ void *handle_client(void *p)
             }
            
         }
+    
+        if(read_size == "RNDNUM"){
+            int randomico = srand(0 % 1000);
+            printf("%d",randomico);
+        }
+        
+        if(read_size == "")
 
        sprintf(&msg_to_client,"Contador clientes: %d\n",client_counter);
 
