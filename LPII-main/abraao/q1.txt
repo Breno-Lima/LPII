@@ -43,12 +43,20 @@ void *handle_client(void *p)
            
         }
     
-        if(read_size == "RNDNUM"){
+        if(read_size == "RNDNUM\n"){
             int randomico = srand(0 % 1000);
             printf("%d",randomico);
         }
         
-        if(read_size == "")
+        if(read_size == "FINISH\n"){
+            for(int i = 0; i < QTD_CLIENTES; i++){
+                QTD_CLIENTES[i] = exit(0);
+            }
+        }
+        
+        if(read_size == "SHTDWN\n"){
+            
+        }
 
        sprintf(&msg_to_client,"Contador clientes: %d\n",client_counter);
 
