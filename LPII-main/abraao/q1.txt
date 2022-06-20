@@ -13,29 +13,30 @@
 #include <time.h>
 
 #define BUFF_SIZE 1024 
-#define QTD_CLIENTS 3 
-#define PORTA 9201 
+#define QTD_clientes 3 
+#define PORTA 9200 
 
 int client_counter = 0;
+int clientes = 0;
 
 typedef struct monitor {
 	FILE *arq;
 	sem_t mutex;
-} t_monitor;
-t_monitor monitor_arq;
+} monitor_tester;
+monitor_tester arquivo_monitor;
 
-void mon_write(char* s) {
-	sem_wait(&monitor_arq.mutex); //protocolo entrada
-	fprintf(monitor_arq.arq, "%s\n", s);
-	sem_post(&monitor_arq.mutex); //protocolo saida
+void funcao_monitor(char* s) {
+	sem_wait(&arquivo_monitor.mutex); 
+	fprintf(arquivo_monitor.arq, "%s\n", s);
+	sem_post(&arquivo_monitor.mutex); 
 }
 
-int clients = 0;
+
 
 void* handle_client(void* p) {
-    long cli_sock = (long) p;
+    long cliente_fd = (long) p;
         char day[3], month[3], year[5];
-            int hour;
+            int horas;
 
             time_t now = time(NULL);
             struct tm *t = localtime(&now);
@@ -43,101 +44,98 @@ void* handle_client(void* p) {
             sprintf(day, "%02d", t->tm_mday, sizeof(day));
             sprintf(month, "%02d", t->tm_mon + 1, sizeof(month));
             sprintf(year, "%04d", t->tm_year + 1900, sizeof(year));
-            hour = t->tm_hour;
+            horas = t->tm_hour;
 
             char msg[30];
-            sprintf(msg, "%dh  of  %s / %s / %s\n", hour, day, month, year);
-            write(cli_sock, msg, strlen(msg));
-            printf("Cliente %ld recebeu data/hora\n", cli_sock);
-    char *server_welcome = "BEM VINDO\n";
+            sprintf(msg, "%dh  of  %s / %s / %s\n", horas, day, month, year);
+            write(cliente_fd, msg, strlen(msg));
+            printf("Cliente %ld recebeu data/hora\n", cliente_fd);
+    char *msg_bem_vindo_servidor = "BEM VINDO\n";
    
     char buffer[BUFF_SIZE+1];
-    write(cli_sock, server_welcome, strlen(server_welcome));
+    write(cliente_fd, msg_bem_vindo_servidor, strlen(msg_bem_vindo_servidor));
 while(1){
-    	read(cli_sock, buffer, BUFF_SIZE);
+    	read(cliente_fd, buffer, BUFF_SIZE);
 		buffer[BUFF_SIZE] = '\0';
 
-        mon_write(buffer);
+        funcao_monitor(buffer);
 
          if (strcmp("SHTDWN\n", buffer) == 0) {
             printf("DERRUBANDO SERVIDOR\n");
-            write(cli_sock, "SERVER FINALIZADA\n", strlen("SERVER FINALIZADO\n"));
-            fclose(monitor_arq.arq); // fecha log
+            write(cliente_fd, "SERVER FINALIZADA\n", strlen("SERVER FINALIZADO\n"));
+            fclose(arquivo_monitor.arq); 
             exit(0);
         }
-
-        
-        
+     
     }
 }
 
 int main(void){
-    int server_sock;
     time_t t;
-    long cli_sock[QTD_CLIENTS];
-    pthread_t cli_threads[QTD_CLIENTS];
+    
+    int socket_servidor;
+    
+    long cliente_fd[QTD_clientes];
+    pthread_t threads_cliente[QTD_clientes];
 
     struct sockaddr_in server_addr;
-    struct sockaddr_in cli_addr[QTD_CLIENTS];
-    int cli_addr_size[QTD_CLIENTS];
+    struct sockaddr_in cli_addr[QTD_clientes];
+    int cli_addr_size[QTD_clientes];
 
-    sem_init(&monitor_arq.mutex, 0, 1);
-    monitor_arq.arq = fopen("monitor.txt", "wt"); // abre arquivo
+    sem_init(&arquivo_monitor.mutex, 0, 1);
+    arquivo_monitor.arq = fopen("monitor.txt", "wt"); // abre arquivo
     srand((unsigned) time(&t));
 
-    printf("Iniciando servidor na porta %d...\n", PORT);
+    printf("Iniciando servidor na porta %d...\n", PORTA);
 
-    server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
 
-	if (server_sock < 0) {
+	if (socket_servidor < 0) {
 		perror("socket() error!\n");
-		exit(-1);
+		exit(0);
 	}
 
     server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
-	server_addr.sin_port = htons(PORT);
+	server_addr.sin_port = htons(PORTA);
 
-    // reebe retorno do bind
-	int bind_result = bind(server_sock,
+	int bind_result = bind(socket_servidor,
 			       (struct sockaddr*) &server_addr,
 		               sizeof(server_addr));
 
 	if (bind_result < 0) {
 		perror("bind() error!\n");
-		exit(-1);
+		exit(0);
 	}
 
 
-	int listen_result = listen(server_sock, QTD_CLIENTS);
+	int listen_result = listen(socket_servidor, QTD_clientes);
 
 	if (listen_result < 0) {
 		perror("listen() error!\n");
-		exit(-1);
+		exit(0);
 	}
 
-    while(cli_sock[clients] = accept(server_sock,
-				     (struct sockaddr*) &cli_addr[clients],
-				      &cli_addr_size[clients])) {
+    while(cliente_fd[clientes] = accept(socket_servidor,(struct sockaddr*) &cli_addr[clientes],&cli_addr_size[clientes])) {
 
-		if (cli_sock < 0 ) {
+		if (cliente_fd < 0 ) {
 			perror("accept() error!\n");
-			exit(-1);
+			exit(0);
 		}
-		printf("Novo cliente conectado!\n");
+		printf("Um novo cliente foi conectado!\n");
 
-		char *cli_ip_addr = inet_ntoa(cli_addr[clients].sin_addr);
-		printf("Endereco do cliente: %s\n", cli_ip_addr);
+		char *ip_do_cliente_addr = inet_ntoa(cli_addr[clientes].sin_addr);
+		printf("Endereco cliente: %s\n", ip_do_cliente_addr);
 
-		pthread_create(&cli_threads[clients], NULL, handle_client,
-				(void*) cli_sock[clients]);
+		pthread_create(&threads_cliente[clientes], NULL, handle_client,
+				(void*) cliente_fd[clientes]);
                 
-		clients++;
-        printf("qtd clients: %d\n", clients);
+		clientes++;
+        printf("qtd clientes: %d\n", clientes);
 
 	}
 
-    fclose(monitor_arq.arq);
+    fclose(arquivo_monitor.arq);
 
 
 }
